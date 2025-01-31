@@ -1,8 +1,17 @@
-"use client"
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+"use client";
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface QuizSubmission {
   accuracy: string;
@@ -62,37 +71,39 @@ interface DashboardProps {
 
 const RankPredictionDashboard: React.FC<DashboardProps> = () => {
   const [quizData, setQuizData] = useState<Quiz | null>(null);
-  const [submissionData, setSubmissionData] = useState<QuizSubmission | null>(null);
+  const [submissionData, setSubmissionData] = useState<QuizSubmission | null>(
+    null
+  );
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchQuizData = async () => {
     try {
-      const response = await fetch('/currentQuiz.json');
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
+      const response = await fetch("/currentQuiz.json");
+      console.log("Response status:", response.status);
+      console.log("Response headers:", response.headers);
       const data = await response.json();
-      console.log('Parsed data:', data);
+      console.log("Parsed data:", data);
       setQuizData(data);
     } catch (err) {
-      console.error('Detailed error:', err);
+      console.error("Detailed error:", err);
     }
   };
-  
+
   const fetchSubmissionData = async () => {
     try {
-      const response = await fetch('/historicalSubmissions.json');
+      const response = await fetch("/historicalSubmissions.json");
       const data = await response.json();
-      
+
       // Select the most recent submission
       const latestSubmission = data[0]; // Assumes data is sorted by created_at
-      
-      console.log('Latest Submission:', latestSubmission);
+
+      console.log("Latest Submission:", latestSubmission);
       setSubmissionData(latestSubmission);
     } catch (err) {
-      console.error('Error fetching submission data:', err);
-      setError('Failed to fetch submission data');
+      console.error("Error fetching submission data:", err);
+      setError("Failed to fetch submission data");
     }
   };
 
@@ -105,71 +116,92 @@ const RankPredictionDashboard: React.FC<DashboardProps> = () => {
     fetchData();
   }, []);
 
-  const calculateOverallStats = useCallback((quiz?: Quiz, submission?: QuizSubmission): OverallStats | null => {
-    if (!quiz || !submission) {
-      return null;
-    }
+  const calculateOverallStats = useCallback(
+    (quiz?: Quiz, submission?: QuizSubmission): OverallStats | null => {
+      if (!quiz || !submission) {
+        return null;
+      }
 
-    try {
-      return {
-        totalQuestions: submission.total_questions || quiz.questions_count,
-        correctAnswers: submission.correct_answers || 0,
-        incorrectAnswers: submission.incorrect_answers || 0,
-        accuracy: submission.accuracy || '0 %',
-        finalScore: submission.final_score || '0.0',
-        duration: submission.duration || '0:00',
-        speed: `${submission.speed || '0'}%`,
-        mistakesCorrected: submission.mistakes_corrected || 0,
-        rank: submission.rank_text || 'N/A',
-        betterThan: submission.better_than || 0
-      };
-    } catch (err) {
-      console.error('Error calculating stats:', err);
-      return null;
-    }
-  }, []);
+      try {
+        return {
+          totalQuestions: submission.total_questions || quiz.questions_count,
+          correctAnswers: submission.correct_answers || 0,
+          incorrectAnswers: submission.incorrect_answers || 0,
+          accuracy: submission.accuracy || "0 %",
+          finalScore: submission.final_score || "0.0",
+          duration: submission.duration || "0:00",
+          speed: `${submission.speed || "0"}%`,
+          mistakesCorrected: submission.mistakes_corrected || 0,
+          rank: submission.rank_text || "N/A",
+          betterThan: submission.better_than || 0,
+        };
+      } catch (err) {
+        console.error("Error calculating stats:", err);
+        return null;
+      }
+    },
+    []
+  );
 
-  const generatePerformanceMetrics = useCallback((submission?: QuizSubmission): PerformanceTrendPoint[] => {
-    if (!submission) return [];
+  const generatePerformanceMetrics = useCallback(
+    (submission?: QuizSubmission): PerformanceTrendPoint[] => {
+      if (!submission) return [];
 
-    try {
-      return [
-        { metric: 'Accuracy', value: parseFloat(submission.accuracy) || 0 },
-        { metric: 'Score', value: parseFloat(submission.final_score) || 0 },
-        { metric: 'Speed', value: parseFloat(submission.speed) || 0 },
-        { metric: 'Initial Mistakes', value: submission.initial_mistake_count || 0 },
-        { metric: 'Mistakes Corrected', value: submission.mistakes_corrected || 0 }
-      ];
-    } catch (err) {
-      console.error('Error generating metrics:', err);
-      return [];
-    }
-  }, []);
+      try {
+        return [
+          { metric: "Accuracy", value: parseFloat(submission.accuracy) || 0 },
+          { metric: "Score", value: parseFloat(submission.final_score) || 0 },
+          { metric: "Speed", value: parseFloat(submission.speed) || 0 },
+          {
+            metric: "Initial Mistakes",
+            value: submission.initial_mistake_count || 0,
+          },
+          {
+            metric: "Mistakes Corrected",
+            value: submission.mistakes_corrected || 0,
+          },
+        ];
+      } catch (err) {
+        console.error("Error generating metrics:", err);
+        return [];
+      }
+    },
+    []
+  );
 
   const analyzeQuizData = useCallback(() => {
     try {
       if (!quizData || !submissionData) {
-        throw new Error('Quiz or submission data is missing');
+        throw new Error("Quiz or submission data is missing");
       }
 
       const stats = calculateOverallStats(quizData, submissionData);
       if (!stats) {
-        throw new Error('Failed to calculate statistics');
+        throw new Error("Failed to calculate statistics");
       }
 
       const metrics = generatePerformanceMetrics(submissionData);
 
       setAnalysisData({
         overallStats: stats,
-        performanceMetrics: metrics
+        performanceMetrics: metrics,
       });
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred while analyzing data');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while analyzing data"
+      );
     } finally {
       setLoading(false);
     }
-  }, [quizData, submissionData, calculateOverallStats, generatePerformanceMetrics]);
+  }, [
+    quizData,
+    submissionData,
+    calculateOverallStats,
+    generatePerformanceMetrics,
+  ]);
 
   useEffect(() => {
     if (quizData && submissionData) {
@@ -185,7 +217,7 @@ const RankPredictionDashboard: React.FC<DashboardProps> = () => {
     return (
       <Alert variant="destructive" className="m-4">
         <AlertDescription>
-          {error || 'Unable to load analysis data'}
+          {error || "Unable to load analysis data"}
         </AlertDescription>
       </Alert>
     );
@@ -195,58 +227,82 @@ const RankPredictionDashboard: React.FC<DashboardProps> = () => {
     <div className="space-y-4 p-4">
       <Card>
         <CardHeader>
-          <CardTitle>{quizData?.title || 'Quiz Analysis'} - {quizData?.daily_date}</CardTitle>
+          <CardTitle>
+            {quizData?.title || "Quiz Analysis"} - {quizData?.daily_date}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h3 className="text-lg font-semibold mb-2">Performance Summary</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                Performance Summary
+              </h3>
               <div className="space-y-2">
                 <p className="flex justify-between">
                   <span>Total Questions:</span>
-                  <span className="font-medium">{analysisData.overallStats.totalQuestions}</span>
+                  <span className="font-medium">
+                    {analysisData.overallStats.totalQuestions}
+                  </span>
                 </p>
                 <p className="flex justify-between">
                   <span>Correct Answers:</span>
-                  <span className="font-medium text-green-600">{analysisData.overallStats.correctAnswers}</span>
+                  <span className="font-medium text-green-600">
+                    {analysisData.overallStats.correctAnswers}
+                  </span>
                 </p>
                 <p className="flex justify-between">
                   <span>Incorrect Answers:</span>
-                  <span className="font-medium text-red-600">{analysisData.overallStats.incorrectAnswers}</span>
+                  <span className="font-medium text-red-600">
+                    {analysisData.overallStats.incorrectAnswers}
+                  </span>
                 </p>
                 <p className="flex justify-between">
                   <span>Accuracy:</span>
-                  <span className="font-medium">{analysisData.overallStats.accuracy}</span>
+                  <span className="font-medium">
+                    {analysisData.overallStats.accuracy}
+                  </span>
                 </p>
                 <p className="flex justify-between">
                   <span>Final Score:</span>
-                  <span className="font-medium">{analysisData.overallStats.finalScore}</span>
+                  <span className="font-medium">
+                    {analysisData.overallStats.finalScore}
+                  </span>
                 </p>
               </div>
             </div>
-            
+
             <div>
               <h3 className="text-lg font-semibold mb-2">Additional Metrics</h3>
               <div className="space-y-2">
                 <p className="flex justify-between">
                   <span>Duration:</span>
-                  <span className="font-medium">{analysisData.overallStats.duration}</span>
+                  <span className="font-medium">
+                    {analysisData.overallStats.duration}
+                  </span>
                 </p>
                 <p className="flex justify-between">
                   <span>Speed:</span>
-                  <span className="font-medium">{analysisData.overallStats.speed}</span>
+                  <span className="font-medium">
+                    {analysisData.overallStats.speed}
+                  </span>
                 </p>
                 <p className="flex justify-between">
                   <span>Mistakes Corrected:</span>
-                  <span className="font-medium">{analysisData.overallStats.mistakesCorrected}</span>
+                  <span className="font-medium">
+                    {analysisData.overallStats.mistakesCorrected}
+                  </span>
                 </p>
                 <p className="flex justify-between">
                   <span>Rank:</span>
-                  <span className="font-medium">{analysisData.overallStats.rank}</span>
+                  <span className="font-medium">
+                    {analysisData.overallStats.rank}
+                  </span>
                 </p>
                 <p className="flex justify-between">
                   <span>Better Than:</span>
-                  <span className="font-medium">{analysisData.overallStats.betterThan} students</span>
+                  <span className="font-medium">
+                    {analysisData.overallStats.betterThan} students
+                  </span>
                 </p>
               </div>
             </div>
@@ -254,7 +310,9 @@ const RankPredictionDashboard: React.FC<DashboardProps> = () => {
 
           {analysisData.performanceMetrics.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                Performance Metrics
+              </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={analysisData.performanceMetrics}>
@@ -263,20 +321,32 @@ const RankPredictionDashboard: React.FC<DashboardProps> = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="value" stroke="#8884d8" name="Value" />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#8884d8"
+                      name="Value"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
           )}
+         
 
           {parseFloat(analysisData.overallStats.accuracy) < 70 && (
             <Alert className="mt-6">
               <AlertDescription>
                 <strong>Areas for Improvement:</strong>
                 <ul className="mt-2 list-disc pl-4">
-                  <li>Work on improving accuracy (currently {analysisData.overallStats.accuracy})</li>
-                  <li>Focus on mistake correction (corrected {analysisData.overallStats.mistakesCorrected} mistakes)</li>
+                  <li>
+                    Work on improving accuracy (currently{" "}
+                    {analysisData.overallStats.accuracy})
+                  </li>
+                  <li>
+                    Focus on mistake correction (corrected{" "}
+                    {analysisData.overallStats.mistakesCorrected} mistakes)
+                  </li>
                 </ul>
               </AlertDescription>
             </Alert>
