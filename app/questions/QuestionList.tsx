@@ -29,7 +29,6 @@ interface Option {
     negative_marks: string;
   }
   
-  // QuestionList.tsx
   import React, { useState, useEffect } from 'react';
   import { Card } from '@/components/ui/card';
   
@@ -49,7 +48,7 @@ interface Option {
               throw new Error("Invalid data: 'quiz' or 'questions' is missing or not an array");
             }
       
-            setQuizData(data.quiz); // Update to set only the `quiz` object as `quizData`
+            setQuizData(data.quiz); 
             setLoading(false);
           } catch (err) {
             console.error("Detailed error:", err);
@@ -122,7 +121,7 @@ interface Option {
                 )}
               </div>
   
-              {/* Options */}
+             
               <div className="ml-8 space-y-2">
                 {question.options.map((option, optIndex) => (
                   <div 
